@@ -1,0 +1,238 @@
+<html>
+  <head>
+    <title>OMERO Zarr Import</title>
+
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      h1 {
+        text-align: center;
+      }
+      #forms_wrapper {
+        width: fit-content;
+        margin: auto;
+        position: relative;
+      }
+      .thumbnail {
+        width: 64px;
+        height: 64px;
+        object-fit: contain;
+      }
+      input[name="url"] {
+        width: 600px;
+        width: 600px;
+        border: solid #ccc 1px;
+        padding: 10px;
+        font-size: 1.0em;
+        border-radius: 5px;
+      }
+      form {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        padding: 5px;
+      }
+      .omero_thumb {
+        position: relative;
+      }
+      /* Hide thumbnails initially */
+      .omero_thumb img, .zarr_thumb img {
+        visibility: hidden;
+        border-radius: 5px;
+      }
+
+      
+      @keyframes spinner {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .spinner {
+        position: relative;
+      }
+      .failed {
+        position: relative;
+        width: 64px;
+        height: 64px;
+        display: inline-block
+      }
+      .failed img {
+        top: 0;
+        left: 0;
+        position: absolute;
+      }
+      .failed div {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3em;
+        color: darkgrey;
+      }
+      .spinner img, .failed img {
+        background-color: #ddd;
+        width: 64px;
+        height: 64px;
+      }
+      .spinner:after {
+        content: "";
+        box-sizing: border-box;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 40px;
+        height: 40px;
+        margin-top: -20px;
+        margin-left: -20px;
+        border-radius: 50%;
+        border: 3px solid rgba(180, 180, 180, 0.6);
+        border-top-color: rgba(0, 0, 0, 0.6);
+        animation: spinner 1s linear infinite;
+      }
+
+      .status {
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.9em;
+        color: #999;
+        visibility: hidden;
+        text-align: center;
+      }
+
+      #add_row {
+        font-size: 1.3em;
+        border-radius: 15px;
+        border: solid grey 1px;
+        background: darkgreen;
+        color: white;
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Import OME-Zarr</h1>
+    <p style="text-align: center">
+      Import OME-Zarr data from a public URL. 
+    </p>
+
+    <div id="forms_wrapper">
+      <button id="add_row">+</button>
+      <form method="post" action="{% url 'omero_web_zarr_import' %}">
+        {% csrf_token %}
+        <label for="url">Zarr URL:</label>
+        <input type="hidden" name="dataset" value="{{ dataset_id }}" />
+        <input
+          type="text"
+          name="url"
+          required
+          value="https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0062A/6001240.zar"
+          placeholder="Enter public OME-Zarr URL"
+          autofocus
+        />
+        <!-- Add spinner class to show spinner -->
+        <div class="zarr_thumb">
+          <img class="thumbnail" src="" alt="Zarr Thumbnail" />
+        </div>
+        <button type="submit" disabled>Import</button>
+        <div class="omero_thumb">
+          <img class="thumbnail" src="" alt="OMERO Thumbnail" />
+          <div class="status">Importing...</div>
+        </div>
+      </form>
+    </div>
+  </body>
+
+  <script type="module">
+    import * as omezarr from "https://cdn.jsdelivr.net/npm/ome-zarr.js@latest/+esm";
+
+    const WEBCLIENT_URL = "{% url 'webindex' %}";
+
+    // ALL events are delegated to formsWrapper so we don't need to add event listeners to each form
+    const formsWrapper = document.getElementById("forms_wrapper");
+
+    formsWrapper.addEventListener("input", function (event) {
+      // Check if the source element input...
+      if (event.target && event.target.nodeName === "INPUT") {
+        console.log("Input field changed:", event.target.value);
+        const url = event.target.value;
+        console.log("Loading thumbnail for " + url);
+
+        const formElement = event.target.closest("form");
+        // show spinner
+        formElement.querySelector(".zarr_thumb").classList.add("spinner");
+
+        omezarr.renderThumbnail(url).then((src) => {
+          formElement.querySelector(".zarr_thumb img").src = src;
+          formElement.querySelector(".zarr_thumb img").style.visibility = "visible";
+          // if src is valid, we enable submit
+          if (src) {
+            formElement.querySelector("button[type='submit']").disabled = false;
+          }
+          formElement.querySelector(".zarr_thumb").classList.remove("spinner");
+        });
+      }
+    });
+
+    // Handle form submission...
+    formsWrapper.addEventListener("submit", function (event) {
+      if (event.target && event.target.nodeName === "FORM") {
+        event.preventDefault();
+        const formElement = event.target;
+        // show spinner...
+        // formElement.classList.add("importing");
+        formElement.querySelector("button[type='submit']").disabled = true;
+        formElement.querySelector(".omero_thumb").classList.add("spinner");
+        formElement.querySelector(".omero_thumb .status").style.visibility = "visible";
+        formElement.querySelector(".omero_thumb .status").innerText = "Importing";
+
+        // submit form data by POST
+        const formData = new FormData(formElement);
+        fetch(event.target.action, {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Success:", data);
+            // only expect a single image...
+            const image_id = data.images[0].id;
+            const src = `${WEBCLIENT_URL}render_thumbnail/${image_id}/`;
+            // load OMERO thumbnail...
+            formElement.querySelector(".omero_thumb .status").innerText = "Loading thumbnail";
+            formElement.querySelector(".omero_thumb img").onload = () => {
+              // when thumbnail loads, show it, hide spinner
+              formElement.querySelector(".omero_thumb img").style.visibility = "visible";
+              formElement.querySelector(".omero_thumb .status").innerText = "Done";
+              formElement.querySelector(".omero_thumb").classList.remove("spinner");
+            };
+            formElement.querySelector(".omero_thumb img").src = src;
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Error during import: " + error);
+            // formElement.classList.remove("importing");
+            formElement.querySelector(".omero_thumb").classList.remove("spinner");
+          });
+      }
+    });
+
+    // Clone the form before any changes, so we duplicate without changes
+    const firstForm = formsWrapper.querySelector("form");
+    const originalForm = firstForm.cloneNode(true);
+
+    document.getElementById("add_row").addEventListener("click", function () {
+      const newForm = originalForm.cloneNode(true);
+      formsWrapper.appendChild(newForm);
+    });
+  </script>
+</html>

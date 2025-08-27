@@ -25,7 +25,7 @@ import requests
 
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 
 from .utils import marshal_axes, marshal_axes_v3
 from .utils import generate_coordinate_transformations
@@ -36,6 +36,8 @@ from omero.model.enums import PixelsTypeuint32, PixelsTypefloat
 from omero.model.enums import PixelsTypedouble
 from omeroweb.webclient.decorators import login_required
 from omeroweb.webgateway.marshal import channelMarshal
+
+from omero_zarr.register import register_zarr
 
 PIXEL_TYPES = {
     PixelsTypeint8: np.int8,
@@ -274,6 +276,37 @@ def image_chunk(request, iid, level, chunk, conn=None, **kwargs):
     rsp["Content-Length"] = len(data)
     rsp["Content-Disposition"] = "attachment; filename=%s" % chunk_name
     return rsp
+
+
+@login_required()
+def zarr_import(request, conn=None, **kwargs):
+
+    if request.method == "POST":
+        url = request.POST.get("url")
+        dataset_id = request.POST.get("dataset")
+        group_id = conn.getEventContext().groupId
+        if dataset_id is not None:
+            dataset = conn.getObject("dataset", dataset_id)
+            group_id = dataset.getDetails().group.id.val
+        print("Importing", url, "to dataset", dataset_id, "in group", group_id)
+        conn.SERVICE_OPTS.setOmeroGroup(group_id)
+
+        if url:
+            objs = register_zarr(conn, uri=url, target=dataset_id)
+
+            # objs could be images or [plate]
+            # assume images for now...
+            images = []
+            for obj in objs:
+                images.append({
+                    "id": obj.id.val,
+                    "name": obj.name.val,
+                })
+            return JsonResponse({"images": images})
+
+    dataset_id = request.GET.get("dataset")
+
+    return render(request, "omero_web_zarr/zarr_import.html", {"dataset_id": dataset_id})
 
 
 def apps(request, app, url):
