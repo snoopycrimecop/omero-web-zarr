@@ -95,7 +95,7 @@ setup(
     download_url='%s/archive/v%s.tar.gz' % (HOMEPAGE, VERSION),  # NOQA
     packages=find_packages(),
     keywords=['omero', 'zarr', 'ome', 'web'],
-    install_requires=['zarr'],
+    install_requires=['git+https://github.com/will-moore/omero-cli-zarr.git@register_command'],
     include_package_data=True,
     zip_safe=False,
     cmdclass={'test': PyTest},
