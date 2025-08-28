@@ -304,13 +304,17 @@ def zarr_import(request, conn=None, **kwargs):
                 })
             return JsonResponse({"images": images})
 
-    context = {}
     dataset_id = request.GET.get("dataset")
-    if dataset_id is not None:
-        dataset = conn.getObject("dataset", dataset_id)
-        if dataset is not None:
-            context["dataset_id"] = dataset_id
-            context["dataset_name"] = dataset.getName()
+    # check if dataset_id is a number
+    if dataset_id is None or not dataset_id.isdigit():
+        raise Http404("Please use ?dataset=<id> to import into a Dataset")
+    dataset = conn.getObject("dataset", dataset_id)
+    if dataset is None:
+        raise Http404(f"Dataset ID: {dataset_id} not found")
+    context = {
+        "dataset_id": dataset_id,
+        "dataset_name": dataset.getName(),
+    }
 
     return render(request, "omero_web_zarr/zarr_import.html", context)
 
