@@ -13,6 +13,13 @@
         width: fit-content;
         margin: auto;
         position: relative;
+        border: solid lightgrey 1px;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 10px 10px 20px rgba(212, 239, 253, 0.5);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
       }
       .thumbnail {
         width: 64px;
@@ -30,17 +37,26 @@
       form {
         display: flex;
         flex-direction: row;
-        align-items: center;
+        align-items: flex-start;
         gap: 10px;
         padding: 5px;
+        margin: 0;
       }
-      .omero_thumb {
+      .omero_thumb, .zarr_thumb {
         position: relative;
       }
       /* Hide thumbnails initially */
       .omero_thumb img, .zarr_thumb img {
         visibility: hidden;
         border-radius: 5px;
+      }
+      button[type="submit"] {
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid darkgreen;
+        font-size: 1.0em;
+        background: darkgreen;
+        color: white;
       }
 
       
@@ -95,13 +111,18 @@
 
       .status {
         position: absolute;
-        top: 100%;
-        left: 50%;
-        transform: translateX(-50%);
+        bottom: 0;
         font-size: 0.9em;
         color: #999;
         visibility: hidden;
-        text-align: center;
+        width: 500px;
+      }
+      .zarr_thumb .status {
+        left: calc(100% + 11px);
+      }
+      .omero_thumb .status {
+        right: calc(100% + 11px);
+        text-align: right;
       }
 
       #add_row {
@@ -111,35 +132,36 @@
         background: darkgreen;
         color: white;
         position: absolute;
-        top: calc(100% + 10px);
-        left: 0;
+        top: calc(100% + 15px);
+        left: 15px;
       }
     </style>
   </head>
   <body>
     <h1>Import OME-Zarr</h1>
     <p style="text-align: center">
-      Import OME-Zarr data from a public URL. 
+      Import OME-Zarr data from a public URL into Dataset: {{ dataset_id }}
+      e.g. https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0062A/6001240.zarr
     </p>
 
     <div id="forms_wrapper">
-      <button id="add_row">+</button>
+      <button id="add_row" title="Add another import">+</button>
       <form method="post" action="{% url 'omero_web_zarr_import' %}">
         {% csrf_token %}
-        <label for="url">Zarr URL:</label>
         <input type="hidden" name="dataset" value="{{ dataset_id }}" />
+        <!-- Add spinner class to show spinner -->
+        <div class="zarr_thumb">
+          <img class="thumbnail" src="" alt="Zarr Thumbnail" />
+          <div class="status">Zarr Preview</div>
+        </div>
         <input
           type="text"
           name="url"
           required
-          value="https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0062A/6001240.zar"
+          value=""
           placeholder="Enter public OME-Zarr URL"
           autofocus
         />
-        <!-- Add spinner class to show spinner -->
-        <div class="zarr_thumb">
-          <img class="thumbnail" src="" alt="Zarr Thumbnail" />
-        </div>
         <button type="submit" disabled>Import</button>
         <div class="omero_thumb">
           <img class="thumbnail" src="" alt="OMERO Thumbnail" />
@@ -167,6 +189,7 @@
         const formElement = event.target.closest("form");
         // show spinner
         formElement.querySelector(".zarr_thumb").classList.add("spinner");
+        formElement.querySelector(".zarr_thumb .status").style.visibility = "visible";
 
         omezarr.renderThumbnail(url).then((src) => {
           formElement.querySelector(".zarr_thumb img").src = src;
