@@ -96,7 +96,8 @@ setup(
     packages=find_packages(),
     keywords=['omero', 'zarr', 'ome', 'web'],
     install_requires=[
-        'git+https://github.com/will-moore/omero-cli-zarr.git@register_command'
+        ('omero-cli-zarr@git+https://github.com/will-moore'
+         '/omero-cli-zarr.git@register_command#egg=omero-cli-zarr')
     ],
     include_package_data=True,
     zip_safe=False,
