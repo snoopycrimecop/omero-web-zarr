@@ -140,8 +140,9 @@
   <body>
     <h1>Import OME-Zarr</h1>
     <p style="text-align: center">
-      Import OME-Zarr data from a public URL into Dataset: {{ dataset_id }}
-      e.g. https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0062A/6001240.zarr
+      Import OME-Zarr data from a public URL
+      {% if dataset_name %} into Dataset: {{ dataset_name }} {% endif %} <br>
+      e.g. https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.4/idr0062A/6001240.zarr_
     </p>
 
     <div id="forms_wrapper">
@@ -182,23 +183,17 @@
     formsWrapper.addEventListener("input", function (event) {
       // Check if the source element input...
       if (event.target && event.target.nodeName === "INPUT") {
-        console.log("Input field changed:", event.target.value);
         const url = event.target.value;
-        console.log("Loading thumbnail for " + url);
-
         const formElement = event.target.closest("form");
-        // show spinner
-        formElement.querySelector(".zarr_thumb").classList.add("spinner");
-        formElement.querySelector(".zarr_thumb .status").style.visibility = "visible";
-
+        setState(formElement, LOADING_ZARR);
         omezarr.renderThumbnail(url).then((src) => {
           formElement.querySelector(".zarr_thumb img").src = src;
-          formElement.querySelector(".zarr_thumb img").style.visibility = "visible";
           // if src is valid, we enable submit
           if (src) {
-            formElement.querySelector("button[type='submit']").disabled = false;
+            setState(formElement, VALID_ZARR);
+          } else {
+            setState(formElement, INVALID_ZARR);
           }
-          formElement.querySelector(".zarr_thumb").classList.remove("spinner");
         });
       }
     });
@@ -208,12 +203,7 @@
       if (event.target && event.target.nodeName === "FORM") {
         event.preventDefault();
         const formElement = event.target;
-        // show spinner...
-        // formElement.classList.add("importing");
-        formElement.querySelector("button[type='submit']").disabled = true;
-        formElement.querySelector(".omero_thumb").classList.add("spinner");
-        formElement.querySelector(".omero_thumb .status").style.visibility = "visible";
-        formElement.querySelector(".omero_thumb .status").innerText = "Importing";
+        setState(formElement, IMPORTING);
 
         // submit form data by POST
         const formData = new FormData(formElement);
@@ -227,16 +217,14 @@
           .then((response) => response.json())
           .then((data) => {
             console.log("Success:", data);
+            setState(formElement, LOADING_THUMBNAIL);
             // only expect a single image...
             const image_id = data.images[0].id;
             const src = `${WEBCLIENT_URL}render_thumbnail/${image_id}/`;
             // load OMERO thumbnail...
-            formElement.querySelector(".omero_thumb .status").innerText = "Loading thumbnail";
             formElement.querySelector(".omero_thumb img").onload = () => {
               // when thumbnail loads, show it, hide spinner
-              formElement.querySelector(".omero_thumb img").style.visibility = "visible";
-              formElement.querySelector(".omero_thumb .status").innerText = "Done";
-              formElement.querySelector(".omero_thumb").classList.remove("spinner");
+              setState(formElement, DONE, image_id);
             };
             formElement.querySelector(".omero_thumb img").src = src;
           })
@@ -257,5 +245,55 @@
       const newForm = originalForm.cloneNode(true);
       formsWrapper.appendChild(newForm);
     });
+
+    // states
+    const LOADING_ZARR = "LOADING_ZARR";
+    const INVALID_ZARR = "INVALID_ZARR";
+    const VALID_ZARR = "VALID_ZARR";
+    const IMPORTING = "IMPORTING";
+    const LOADING_THUMBNAIL = "LOADING_THUMBNAIL";
+    const DONE = "DONE";
+
+    function setState(formElement, state, data) {
+      const $zarr = formElement.querySelector(".zarr_thumb");
+      const $zarrStatus = $zarr.querySelector(".status");
+      const $zarrImg = $zarr.querySelector("img");
+      const $omero = formElement.querySelector(".omero_thumb");
+      const $omeroStatus = $omero.querySelector(".status");
+      const $omeroImg = $omero.querySelector("img");
+      const $submit = formElement.querySelector("button[type='submit']");
+
+      let message = "";
+      switch (state) {
+        case LOADING_ZARR:
+          $zarr.classList.add("spinner");
+          $zarrImg.style.visibility = "hidden";
+          $zarrStatus.style.visibility = "visible";
+          break;
+        case INVALID_ZARR:
+          $zarr.classList.remove("spinner");
+          $submit.disabled = true;
+          break;
+        case VALID_ZARR:
+          $zarr.classList.remove("spinner");
+          $zarrImg.style.visibility = "visible";
+          $submit.disabled = false;
+          break;
+        case IMPORTING:
+          $submit.disabled = true;
+          $omero.classList.add("spinner");
+          $omeroStatus.innerText = "Importing";
+          $omeroStatus.style.visibility = "visible";
+          break;
+        case LOADING_THUMBNAIL:
+          $omeroStatus.innerText = "Loading OMERO thumbnail";
+          break;
+        case DONE:
+          $omero.classList.remove("spinner");
+          $omeroImg.style.visibility = "visible";
+          $omeroStatus.innerHTML = `View <a target="_blank" href="${WEBCLIENT_URL}?show=image-${data}">Image: ${data}</a>`;
+          break;
+      }
+    }
   </script>
 </html>

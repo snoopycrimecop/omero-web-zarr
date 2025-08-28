@@ -287,8 +287,8 @@ def zarr_import(request, conn=None, **kwargs):
         group_id = conn.getEventContext().groupId
         if dataset_id is not None:
             dataset = conn.getObject("dataset", dataset_id)
-            group_id = dataset.getDetails().group.id.val
-        print("Importing", url, "to dataset", dataset_id, "in group", group_id)
+            if dataset is not None:
+                group_id = dataset.getDetails().group.id.val
         conn.SERVICE_OPTS.setOmeroGroup(group_id)
 
         if url:
@@ -304,9 +304,15 @@ def zarr_import(request, conn=None, **kwargs):
                 })
             return JsonResponse({"images": images})
 
+    context = {}
     dataset_id = request.GET.get("dataset")
+    if dataset_id is not None:
+        dataset = conn.getObject("dataset", dataset_id)
+        if dataset is not None:
+            context["dataset_id"] = dataset_id
+            context["dataset_name"] = dataset.getName()
 
-    return render(request, "omero_web_zarr/zarr_import.html", {"dataset_id": dataset_id})
+    return render(request, "omero_web_zarr/zarr_import.html", context)
 
 
 def apps(request, app, url):
