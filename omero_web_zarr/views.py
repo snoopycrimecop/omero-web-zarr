@@ -291,18 +291,16 @@ def zarr_import(request, conn=None, **kwargs):
                 group_id = dataset.getDetails().group.id.val
         conn.SERVICE_OPTS.setOmeroGroup(group_id)
 
-        if url:
-            objs = register_zarr(conn, uri=url, target=dataset_id)
-
-            # objs could be images or [plate]
-            # assume images for now...
-            images = []
-            for obj in objs:
-                images.append({
-                    "id": obj.id.val,
-                    "name": obj.name.val,
-                })
-            return JsonResponse({"images": images})
+        objs = register_zarr(conn, uri=url, target=dataset_id)
+        # objs could be images or [plate]
+        # assume images for now...
+        images = []
+        for obj in objs:
+            images.append({
+                "id": obj.id.val,
+                "name": obj.name.val,
+            })
+        return JsonResponse({"images": images})
 
     dataset_id = request.GET.get("dataset")
     # check if dataset_id is a number

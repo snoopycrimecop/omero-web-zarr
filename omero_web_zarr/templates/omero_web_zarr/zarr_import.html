@@ -259,9 +259,7 @@
           })
           .catch((error) => {
             console.error("Error:", error);
-            alert("Error during import: " + error);
-            // formElement.classList.remove("importing");
-            formElement.querySelector(".omero_thumb").classList.remove("spinner");
+            setState(formElement, IMPORT_ERROR);
           });
         setState(formElement, IMPORTING);
       }
@@ -281,6 +279,7 @@
     const INVALID_ZARR = "INVALID_ZARR";
     const VALID_ZARR = "VALID_ZARR";
     const IMPORTING = "IMPORTING";
+    const IMPORT_ERROR = "IMPORT_ERROR";
     const LOADING_THUMBNAIL = "LOADING_THUMBNAIL";
     const DONE = "DONE";
 
@@ -334,6 +333,10 @@
           $omeroStatus.innerText = "Importing";
           $omeroStatus.style.visibility = "visible";
           $urlInput.disabled = true;  // disable after submit or url won't get submitted!
+          break;
+        case IMPORT_ERROR:
+          $omero.classList.remove("spinner");
+          $omeroStatus.innerText = "Import Error";
           break;
         case LOADING_THUMBNAIL:
           $omeroStatus.innerText = "Loading OMERO thumbnail";
