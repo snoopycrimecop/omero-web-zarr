@@ -248,12 +248,12 @@
             console.log("Success:", data);
             setState(formElement, LOADING_THUMBNAIL);
             // only expect a single image...
-            const image_id = data.images[0].id;
-            const src = `${WEBCLIENT_URL}render_thumbnail/${image_id}/`;
+            const image_ids = data.images.map((img) => img.id);
+            const src = `${WEBCLIENT_URL}render_thumbnail/${image_ids[0]}/`;
             // load OMERO thumbnail...
             formElement.querySelector(".omero_thumb img").onload = () => {
               // when thumbnail loads, show it, hide spinner
-              setState(formElement, DONE, image_id);
+              setState(formElement, DONE, image_ids);
             };
             formElement.querySelector(".omero_thumb img").src = src;
           })
@@ -341,7 +341,13 @@
         case DONE:
           $omero.classList.remove("spinner");
           $omeroImg.style.visibility = "visible";
-          $omeroStatus.innerHTML = `View <a target="_blank" href="${WEBCLIENT_URL}?show=image-${data}">Image: ${data}</a>`;
+          let iids = data;
+          if (iids && iids.length) {
+            let view = iids.length > 1 ? `${iids.length} Images` : `Image: ${iids[0]}`;
+            let link = "image-" + iids.join("|image-");
+            $omeroStatus.innerHTML = `View <a target="_blank" href="${WEBCLIENT_URL}?show=${link}">${view}</a>`;
+          }
+          
           break;
       }
     }
