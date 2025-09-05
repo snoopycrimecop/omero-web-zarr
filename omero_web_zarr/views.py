@@ -171,7 +171,7 @@ def image_zarray(request, iid, level, conn=None, **kwargs):
     rsp = {"data": "fail"}
     with tempfile.TemporaryDirectory() as tmpdirname:
         # creates EMPTY zarray, but it's all we need to write .zarray
-        zarr.open_array(tmpdirname, mode='w', shape=shape,
+        zarr.open_array(tmpdirname, mode='w', shape=shape, zarr_format=2,
                         chunks=chunks, dtype=np_type)
 
         # reads zarray
@@ -258,6 +258,7 @@ def image_chunk(request, iid, level, chunk, conn=None, **kwargs):
     with tempfile.TemporaryDirectory() as tmpdirname:
         # write single chunk to array of same shape
         zarr_array = zarr.open_array(tmpdirname, mode='w', shape=chunks,
+                                     zarr_format=2,
                                      chunks=chunks, dtype=plane.dtype)
         zarr_array[tuple(indices)] = plane
 
