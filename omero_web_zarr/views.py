@@ -37,7 +37,7 @@ from omero.model.enums import PixelsTypedouble
 from omeroweb.webclient.decorators import login_required
 from omeroweb.webgateway.marshal import channelMarshal
 
-from omero_zarr.register import register_zarr
+from omero_zarr.zarr_import import import_zarr
 
 PIXEL_TYPES = {
     PixelsTypeint8: np.int8,
@@ -291,7 +291,7 @@ def zarr_import(request, conn=None, **kwargs):
                 group_id = dataset.getDetails().group.id.val
         conn.SERVICE_OPTS.setOmeroGroup(group_id)
 
-        objs = register_zarr(conn, uri=url, target=dataset_id)
+        objs = import_zarr(conn, uri=url, target=dataset_id)
         # objs could be images or [plate]
         # assume images for now...
         images = []
