@@ -9,7 +9,7 @@ omero-web-zarr
 
 OMERO.web plugin for OME-Zarr.
 
-Implementation of [OME-NGFF](https://ngff.openmicroscopy.org/latest/) API with an omero-web app.
+Implementation of `OME-NGFF <https://ngff.openmicroscopy.org/latest/>`_ API with an omero-web app.
 
 This plugin supports OME-NGFF v0.1, v03, v0.4.
 For a given Image ID in OMERO, the following URL will refer to an OME-NGFF image::
@@ -18,8 +18,8 @@ For a given Image ID in OMERO, the following URL will refer to an OME-NGFF image
 
 Note: This app has not been extensively tested and should **not** be considered "production ready".
 
-Currently supports [OME-NGFF v0.3](https://ngff.openmicroscopy.org/0.3/index.html) and
-[OME-NGFF v0.4](https://ngff.openmicroscopy.org/0.4/index.html).
+Currently supports `OME-NGFF v0.3 <https://ngff.openmicroscopy.org/0.3/index.html>`_ and
+`OME-NGFF v0.4 <https://ngff.openmicroscopy.org/0.4/index.html>`_.
 
 Development
 -----------
@@ -59,7 +59,7 @@ Then you will be able to access OMERO Images in OME-NGFF format v0.3 or v0.4 wit
     [omero-server]/zarr/v0.4/image/[ID].zarr/0/0/0/0
 
 
-You can see this in action using the [Vizarr](https://github.com/hms-dbmi/vizarr/) viewer.
+You can see this in action using the `Vizarr <https://github.com/hms-dbmi/vizarr/>`_ viewer.
 
 This omero-web app self-hosts Vizarr to avoid CORS issues (delegating to https://hms-dbmi.github.io/vizarr/).
 
@@ -71,7 +71,7 @@ Testing
 -------
 
 To run integration tests (in your omero-web conda environment above) with `pytest`.
-See [OMERO testing docs](https://docs.openmicroscopy.org/latest/omero/developers/testing.html)
+See `OMERO testing docs <https://docs.openmicroscopy.org/latest/omero/developers/testing.html>`_
 for setting `ICE_CONFIG` and dependencies etc., then::
 
     $ pytest test/integration/test_ngff.py
