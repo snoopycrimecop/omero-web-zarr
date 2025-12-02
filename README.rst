@@ -11,10 +11,10 @@ OMERO.web plugin for OME-Zarr.
 
 Implementation of `OME-NGFF <https://ngff.openmicroscopy.org/latest/>`_ API with an omero-web app.
 
-This plugin supports OME-NGFF v0.1, v03, v0.4.
+This plugin supports OME-NGFF v03 and v0.4.
 For a given Image ID in OMERO, the following URL will refer to an OME-NGFF image::
 
-    https://[omero-server]/zarr/image/ID.zarr/
+    https://[omero-server]/zarr/v0.4/image/[ID].zarr/
 
 Note: This app has not been extensively tested and should **not** be considered "production ready".
 
