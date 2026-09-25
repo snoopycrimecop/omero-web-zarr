@@ -42,6 +42,9 @@ Configuration
 
     $ omero config append omero.web.open_with '["web_zarr_validator", "omero_web_zarr_index", {"supported_objects":["image"], "label": "NGFF validator", "script_url": "omero_web_zarr/openwith_validator.js"}]'
 
+    # To enable web-based import of public OME-Zarr images (requires `omero-zarr-pixel-buffer` on the server). Open via Dataset > Open with > "Import OME-Zarr"
+
+    $ omero config append omero.web.open_with '["web_zarr_import", "omero_web_zarr_import", {"supported_objects":["dataset"], "label": "Import OME-Zarr"}]'
 
 Then you will be able to access OMERO Images in OME-NGFF format v0.3 or v0.4 with a URLs like::
 
